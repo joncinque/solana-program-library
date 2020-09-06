@@ -527,51 +527,15 @@ export class Token {
   }
 
   /**
-   * Retrieve account information
+   * Retrieve account information for this mint.
    *
    * @param account Public key of the account
    */
   async getAccountInfo(account: PublicKey): Promise<AccountInfo> {
-    const info = await this.connection.getAccountInfo(account);
-    if (info === null) {
-      throw new Error('Failed to find account');
-    }
-    if (!info.owner.equals(this.programId)) {
+    const accountInfo = await Token.accountInfo(this.connection, account);
+
+    if (!accountInfo.owner.equals(this.programId)) {
       throw new Error(`Invalid account owner`);
-    }
-    if (info.data.length != AccountLayout.span) {
-      throw new Error(`Invalid account size`);
-    }
-
-    const data = Buffer.from(info.data);
-    const accountInfo = AccountLayout.decode(data);
-    accountInfo.mint = new PublicKey(accountInfo.mint);
-    accountInfo.owner = new PublicKey(accountInfo.owner);
-    accountInfo.amount = u64.fromBuffer(accountInfo.amount);
-
-    if (accountInfo.delegateOption === 0) {
-      accountInfo.delegate = null;
-      accountInfo.delegatedAmount = new u64();
-    } else {
-      accountInfo.delegate = new PublicKey(accountInfo.delegate);
-      accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
-    }
-
-    accountInfo.isInitialized = accountInfo.state !== 0;
-    accountInfo.isFrozen = accountInfo.state === 2;
-
-    if (accountInfo.isNativeOption === 1) {
-      accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
-      accountInfo.isNative = true;
-    } else {
-      accountInfo.rentExemptReserve = null;
-      accountInfo.isNative = false;
-    }
-
-    if (accountInfo.closeAuthorityOption === 0) {
-      accountInfo.closeAuthority = null;
-    } else {
-      accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
     }
 
     if (!accountInfo.mint.equals(this.publicKey)) {
@@ -581,6 +545,7 @@ export class Token {
         )} !== ${JSON.stringify(this.publicKey)}`,
       );
     }
+
     return accountInfo;
   }
 
@@ -1370,5 +1335,58 @@ export class Token {
       programId: programId,
       data,
     });
+  }
+
+  /**
+   * Get the account information for a token account.
+   * Does not require the prior knowledge of the mint address.
+   * @param connection
+   * @param account
+   * @return {Promise<AccountInfo>}
+   */
+  static async accountInfo(
+    connection: Connection,
+    account: PublicKey,
+  ): Promise<AccountInfo> {
+    const info = await connection.getAccountInfo(account);
+    if (info === null) {
+      throw new Error('Failed to find account');
+    }
+    if (info.data.length != AccountLayout.span) {
+      throw new Error(`Invalid account size`);
+    }
+
+    const data = Buffer.from(info.data);
+    const accountInfo = AccountLayout.decode(data);
+    accountInfo.mint = new PublicKey(accountInfo.mint);
+    accountInfo.owner = new PublicKey(accountInfo.owner);
+    accountInfo.amount = u64.fromBuffer(accountInfo.amount);
+
+    if (accountInfo.delegateOption === 0) {
+      accountInfo.delegate = null;
+      accountInfo.delegatedAmount = new u64();
+    } else {
+      accountInfo.delegate = new PublicKey(accountInfo.delegate);
+      accountInfo.delegatedAmount = u64.fromBuffer(accountInfo.delegatedAmount);
+    }
+
+    accountInfo.isInitialized = accountInfo.state !== 0;
+    accountInfo.isFrozen = accountInfo.state === 2;
+
+    if (accountInfo.isNativeOption === 1) {
+      accountInfo.rentExemptReserve = u64.fromBuffer(accountInfo.isNative);
+      accountInfo.isNative = true;
+    } else {
+      accountInfo.rentExemptReserve = null;
+      accountInfo.isNative = false;
+    }
+
+    if (accountInfo.closeAuthorityOption === 0) {
+      accountInfo.closeAuthority = null;
+    } else {
+      accountInfo.closeAuthority = new PublicKey(accountInfo.closeAuthority);
+    }
+
+    return accountInfo;
   }
 }

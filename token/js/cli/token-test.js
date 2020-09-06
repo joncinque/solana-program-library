@@ -166,6 +166,12 @@ export async function mintTo(): Promise<void> {
 
   const accountInfo = await testToken.getAccountInfo(testAccount);
   assert(accountInfo.amount.toNumber() === 1000);
+
+  const accountInfoUnknownMint = await Token.accountInfo(
+    connection,
+    testAccount,
+  );
+  assert(accountInfo.mint === accountInfoUnknownMint.mint);
 }
 
 export async function transfer(): Promise<void> {
