@@ -735,13 +735,15 @@ impl PrintProgramError for SwapError {
             SwapError::ConversionFailure => info!("Error: Conversion to or from u64 failed."),
             SwapError::InvalidFee => {
                 info!("Error: The provided fee does not match the program owner's constraints")
-            },
+            }
             SwapError::IncorrectTokenProgramId => {
                 info!("Error: The provided token program does not match the token program expected by the swap")
-            },
+            }
             SwapError::InvalidTokenAccount => {
-                info!("Error: The provided token account is not owned by the expected token program")
-            },
+                info!(
+                    "Error: The provided token account is not owned by the expected token program"
+                )
+            }
         }
     }
 }
