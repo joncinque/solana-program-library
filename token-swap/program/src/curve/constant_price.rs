@@ -6,11 +6,11 @@ use crate::{
     },
     error::SwapError,
 };
+use arrayref::{array_mut_ref, array_ref};
 use solana_program::{
     program_error::ProgramError,
     program_pack::{IsInitialized, Pack, Sealed},
 };
-use arrayref::{array_mut_ref, array_ref};
 
 /// ConstantPriceCurve struct implementing CurveCalculator
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -199,7 +199,6 @@ mod tests {
         assert_eq!(result.source_amount_swapped, token_b_price);
         assert_eq!(result.destination_amount_swapped, 1u128);
     }
-
 
     #[test]
     fn pack_flat_curve() {
