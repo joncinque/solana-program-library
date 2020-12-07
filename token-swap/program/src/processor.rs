@@ -1997,8 +1997,9 @@ mod tests {
         // create valid swap
         accounts.initialize_swap().unwrap();
 
-        // create valid flat swap
+        // create invalid flat swap
         {
+            let token_b_price = 0;
             let fees = Fees {
                 trade_fee_numerator,
                 trade_fee_denominator,
@@ -2011,7 +2012,32 @@ mod tests {
             };
             let swap_curve = SwapCurve {
                 curve_type: CurveType::ConstantPrice,
-                calculator: Box::new(ConstantPriceCurve {}),
+                calculator: Box::new(ConstantPriceCurve { token_b_price }),
+            };
+            let mut accounts =
+                SwapAccountInfo::new(&user_key, fees, swap_curve, token_a_amount, token_b_amount);
+            assert_eq!(
+                Err(SwapError::InvalidCurve.into()),
+                accounts.initialize_swap()
+            );
+        }
+
+        // create valid flat swap
+        {
+            let token_b_price = 10;
+            let fees = Fees {
+                trade_fee_numerator,
+                trade_fee_denominator,
+                owner_trade_fee_numerator,
+                owner_trade_fee_denominator,
+                owner_withdraw_fee_numerator,
+                owner_withdraw_fee_denominator,
+                host_fee_numerator,
+                host_fee_denominator,
+            };
+            let swap_curve = SwapCurve {
+                curve_type: CurveType::ConstantPrice,
+                calculator: Box::new(ConstantPriceCurve { token_b_price }),
             };
             let mut accounts =
                 SwapAccountInfo::new(&user_key, fees, swap_curve, token_a_amount, token_b_amount);
@@ -3876,10 +3902,11 @@ mod tests {
             token_a_amount,
             token_b_amount,
         );
+        let token_b_price = 1;
         check_valid_swap_curve(
             fees,
             CurveType::ConstantPrice,
-            Box::new(ConstantPriceCurve {}),
+            Box::new(ConstantPriceCurve { token_b_price }),
             token_a_amount,
             token_b_amount,
         );
@@ -3916,12 +3943,13 @@ mod tests {
             token_a_amount,
             token_b_amount,
         );
+        let token_b_price = 1_000;
         check_valid_swap_curve(
             fees,
             CurveType::ConstantPrice,
-            Box::new(ConstantPriceCurve {}),
+            Box::new(ConstantPriceCurve { token_b_price }),
             token_a_amount,
-            token_b_amount,
+            token_b_amount / token_b_price,
         );
     }
 
