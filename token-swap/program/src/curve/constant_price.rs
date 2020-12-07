@@ -273,7 +273,12 @@ mod tests {
         assert_eq!(curve, unpacked);
     }
 
-    fn check_pool_token_conversion(token_b_price: u128, swap_token_a_amount: u128, swap_token_b_amount: u128, token_b_amount: u128) {
+    fn check_pool_token_conversion(
+        token_b_price: u128,
+        swap_token_a_amount: u128,
+        swap_token_b_amount: u128,
+        token_b_amount: u128,
+    ) {
         let token_a_amount = token_b_amount * token_b_price;
         let curve = ConstantPriceCurve {
             token_b_price: token_b_price as u64,
@@ -309,18 +314,14 @@ mod tests {
             (1_000_251, 0, 1_288, 1),
             (1_000_000_000_000, 212, 10_000, 1),
         ];
-        for (
-            token_b_price,
-            swap_token_a_amount,
-            swap_token_b_amount,
-            token_b_amount
-        ) in tests.iter()
+        for (token_b_price, swap_token_a_amount, swap_token_b_amount, token_b_amount) in
+            tests.iter()
         {
             check_pool_token_conversion(
                 *token_b_price,
                 *swap_token_a_amount,
                 *swap_token_b_amount,
-                *token_b_amount
+                *token_b_amount,
             );
         }
     }
