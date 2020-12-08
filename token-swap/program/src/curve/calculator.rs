@@ -100,7 +100,7 @@ pub trait CurveCalculator: Debug + DynPack {
         })
     }
 
-    /// Get the amount of pool tokens for the given amount of token A and B
+    /// Get the amount of pool tokens for the given amount of token A or B
     /// See the concept for the calculation at:
     /// https://balancer.finance/whitepaper/#single-asset-deposit
     fn trading_tokens_to_pool_tokens(
