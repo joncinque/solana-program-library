@@ -28,9 +28,6 @@ pub enum StakePoolError {
     /// Token account is associated with the wrong mint.
     #[error("WrongAccountMint")]
     WrongAccountMint,
-    /// Account balance should be zero.
-    #[error("NonZeroBalance")]
-    NonZeroBalance,
     /// Wrong pool owner account.
     #[error("WrongOwner")]
     WrongOwner,
@@ -40,11 +37,11 @@ pub enum StakePoolError {
     /// Invalid validator stake list account.
     #[error("InvalidValidatorStakeList")]
     InvalidValidatorStakeList,
-
-    // 10.
     /// Invalid owner fee account.
     #[error("InvalidFeeAccount")]
     InvalidFeeAccount,
+
+    // 10.
     /// Specified pool mint account is wrong.
     #[error("WrongPoolMint")]
     WrongPoolMint,
@@ -57,11 +54,11 @@ pub enum StakePoolError {
     /// Stake account voting for this validator already exists in the pool.
     #[error("ValidatorAlreadyAdded")]
     ValidatorAlreadyAdded,
-
-    // 15.
     /// Stake account for this validator not found in the pool.
     #[error("ValidatorNotFound")]
     ValidatorNotFound,
+
+    // 15.
     /// Stake account address not properly derived from the validator address.
     #[error("InvalidStakeAccountAddress")]
     InvalidStakeAccountAddress,
@@ -74,11 +71,11 @@ pub enum StakePoolError {
     /// Validator stake account is not found in the list storage.
     #[error("UnknownValidatorStakeAccount")]
     UnknownValidatorStakeAccount,
-
-    // 20.
     /// Wrong minting authority set for mint pool account
     #[error("WrongMintingAuthority")]
     WrongMintingAuthority,
+
+    // 20.
     /// Account is not rent-exempt
     #[error("AccountNotRentExempt")]
     AccountNotRentExempt,
