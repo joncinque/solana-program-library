@@ -131,6 +131,7 @@ impl Processor {
     }
 
     /// Issue a stake_split instruction.
+    #[allow(clippy::too_many_arguments)]
     pub fn stake_split<'a>(
         stake_pool: &Pubkey,
         stake_account: AccountInfo<'a>,
@@ -139,6 +140,8 @@ impl Processor {
         bump_seed: u8,
         amount: u64,
         split_stake: AccountInfo<'a>,
+        reserved: AccountInfo<'a>,
+        stake_program_info: AccountInfo<'a>,
     ) -> Result<(), ProgramError> {
         let me_bytes = stake_pool.to_bytes();
         let authority_signature_seeds = [&me_bytes[..32], authority_type, &[bump_seed]];
@@ -150,8 +153,10 @@ impl Processor {
             &ix,
             &[
                 stake_account,
-                split_stake,
+                reserved,
                 authority,
+                split_stake,
+                stake_program_info,
             ],
             signers,
         )
@@ -1109,6 +1114,8 @@ impl Processor {
             stake_pool.withdraw_bump_seed,
             stake_amount,
             stake_split_to.clone(),
+            clock_info.clone(),
+            stake_program_info.clone(),
         )?;
 
         Self::stake_authorize(
