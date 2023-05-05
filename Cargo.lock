@@ -6669,6 +6669,7 @@ dependencies = [
  "num-traits",
  "num_enum 0.6.1",
  "solana-program",
+ "solana-sdk",
  "spl-tlv-account-resolution",
  "spl-type-length-value",
  "thiserror",

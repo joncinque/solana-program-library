@@ -12,7 +12,7 @@ use {
 
 /// Errors that may be returned by the interface.
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum TransferHookError {
+pub enum HookInterfaceError {
     /// Incorrect account provided
     #[error("Incorrect account provided")]
     IncorrectAccount,
@@ -23,18 +23,18 @@ pub enum TransferHookError {
     #[error("Incorrect mint authority has signed the instruction")]
     IncorrectMintAuthority,
 }
-impl From<TransferHookError> for ProgramError {
-    fn from(e: TransferHookError) -> Self {
+impl From<HookInterfaceError> for ProgramError {
+    fn from(e: HookInterfaceError) -> Self {
         ProgramError::Custom(e as u32)
     }
 }
-impl<T> DecodeError<T> for TransferHookError {
+impl<T> DecodeError<T> for HookInterfaceError {
     fn type_of() -> &'static str {
-        "TransferHookError"
+        "HookInterfaceError"
     }
 }
 
-impl PrintProgramError for TransferHookError {
+impl PrintProgramError for HookInterfaceError {
     fn print<E>(&self)
     where
         E: 'static

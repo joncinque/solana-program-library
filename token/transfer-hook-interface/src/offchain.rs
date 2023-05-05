@@ -1,9 +1,10 @@
 //! Offchain helper for fetching required accounts to build instructions
 
 use {
-    crate::{get_extra_account_metas_address, instruction::ExecuteInstruction},
+    crate::get_extra_account_metas_address,
     solana_program::{instruction::AccountMeta, program_error::ProgramError, pubkey::Pubkey},
     spl_tlv_account_resolution::state::ExtraAccountMetas,
+    spl_type_length_value::discriminator::TlvDiscriminator,
     std::future::Future,
 };
 
@@ -31,12 +32,13 @@ type AccountFetchError = Box<dyn std::error::Error + Send + Sync>;
 ///     &mint,
 /// ).await?;
 /// ```
-pub async fn get_extra_account_metas<F, Fut>(
+pub async fn get_extra_account_metas<T, F, Fut>(
     get_account_data_fn: F,
     permissioned_transfer_program_id: &Pubkey,
     mint: &Pubkey,
 ) -> Result<Vec<AccountMeta>, AccountFetchError>
 where
+    T: TlvDiscriminator,
     F: Fn(Pubkey) -> Fut,
     Fut: Future<Output = AccountDataResult>,
 {
@@ -46,10 +48,7 @@ where
     let validation_account_data = get_account_data_fn(validation_address)
         .await?
         .ok_or(ProgramError::InvalidAccountData)?;
-    ExtraAccountMetas::add_to_vec::<ExecuteInstruction>(
-        &mut instruction_metas,
-        &validation_account_data,
-    )?;
+    ExtraAccountMetas::add_to_vec::<T>(&mut instruction_metas, &validation_account_data)?;
     instruction_metas.push(AccountMeta {
         pubkey: *permissioned_transfer_program_id,
         is_signer: false,

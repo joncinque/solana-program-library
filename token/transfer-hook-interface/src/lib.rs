@@ -8,13 +8,19 @@
 #![cfg_attr(not(test), forbid(unsafe_code))]
 
 pub mod error;
+pub mod inline_spl_token;
 pub mod instruction;
 pub mod invoke;
 pub mod offchain;
 
+use error::HookInterfaceError;
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
-use solana_program::pubkey::Pubkey;
+use solana_program::{
+    account_info::AccountInfo, entrypoint::ProgramResult, program::invoke_signed,
+    program_error::ProgramError, pubkey::Pubkey, system_instruction,
+};
+use spl_tlv_account_resolution::state::ExtraAccountMetas;
 
 /// Namespace for all programs implementing transfer-hook
 pub const NAMESPACE: &str = "spl-transfer-hook-interface";
@@ -49,4 +55,49 @@ pub fn collect_extra_account_metas_signer_seeds<'a>(
     bump_seed: &'a [u8],
 ) -> [&'a [u8]; 3] {
     [EXTRA_ACCOUNT_METAS_SEED, mint.as_ref(), bump_seed]
+}
+
+/// Function used by programs implementing the interface to create
+/// a validation account to hold extra account metas
+pub fn create_validation_account_checked(
+    program_id: &Pubkey,
+    mint_info: &AccountInfo<'_>,
+    validation_account: &AccountInfo<'_>,
+    authority_info: &AccountInfo<'_>,
+    length: usize,
+) -> ProgramResult {
+    // check that the mint authority is valid without fully deserializing
+    let mint_authority = inline_spl_token::get_mint_authority(&mint_info.try_borrow_data()?)?;
+    let mint_authority = mint_authority.ok_or(HookInterfaceError::MintHasNoMintAuthority)?;
+
+    // Check signers
+    if !authority_info.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+    if *authority_info.key != mint_authority {
+        return Err(HookInterfaceError::IncorrectMintAuthority.into());
+    }
+
+    // Check validation account
+    let (expected_validation_address, bump_seed) =
+        get_extra_account_metas_address_and_bump_seed(mint_info.key, program_id);
+    if expected_validation_address != *validation_account.key {
+        return Err(ProgramError::InvalidSeeds);
+    }
+
+    // Create the account
+    let bump_seed = [bump_seed];
+    let signer_seeds = collect_extra_account_metas_signer_seeds(mint_info.key, &bump_seed);
+    let account_size = ExtraAccountMetas::size_of(length)?;
+    invoke_signed(
+        &system_instruction::allocate(validation_account.key, account_size as u64),
+        &[validation_account.clone()],
+        &[&signer_seeds],
+    )?;
+    invoke_signed(
+        &system_instruction::assign(validation_account.key, program_id),
+        &[validation_account.clone()],
+        &[&signer_seeds],
+    )?;
+    Ok(())
 }

@@ -29,7 +29,9 @@ use {
         solana_zk_token_sdk::errors::ProofError,
         state::{Account, AccountState, Mint, Multisig},
     },
-    spl_transfer_hook_interface::offchain::get_extra_account_metas,
+    spl_transfer_hook_interface::{
+        instruction::transfer::Transfer, offchain::get_extra_account_metas,
+    },
     std::{
         fmt, io,
         sync::{Arc, RwLock},
@@ -838,7 +840,7 @@ where
         } else {
             let state = self.get_mint_info().await.unwrap();
             if let Some(program_id) = transfer_hook::get_program_id(&state) {
-                let extra_account_metas = get_extra_account_metas(
+                let extra_account_metas = get_extra_account_metas::<Transfer, _, _>(
                     |address| {
                         self.client
                             .get_account(address)
