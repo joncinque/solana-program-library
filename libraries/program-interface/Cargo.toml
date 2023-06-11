@@ -1,0 +1,15 @@
+[package]
+name = "spl-program-interface"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+spl-program-interface-derive = { version = "0.1.0", path = "./derive" }
+spl-program-interface-syn = { version = "0.1.0", path = "./syn" }
+spl-token-metadata-interface = { version = "0.1.0", path = "../../token-metadata/interface" }
+
+[dev-dependencies]
+solana-program = "1.14.12"

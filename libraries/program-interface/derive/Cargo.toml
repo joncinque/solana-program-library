@@ -1,0 +1,13 @@
+[package]
+name = "spl-program-interface-derive"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+spl-program-interface-syn = { version = "0.1.0", path = "../syn" }
+syn = { version = "2.0", features = ["extra-traits"] }
