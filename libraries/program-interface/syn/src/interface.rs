@@ -4,13 +4,15 @@
 //! Also provides the collection of currently accepted
 //! sRFC interfaces
 
-use quote::quote;
 use solana_program::program_error::ProgramError;
 use spl_token_metadata_interface::instruction::TokenMetadataInstruction;
 use std::collections::{HashMap, HashSet};
 use syn::{ItemFn, Type, Variant};
 
-use crate::error::SplProgramInterfaceError;
+use crate::error::{
+    instruction_missing_verbose, invalid_instruction_namespace_verbose, missing_args_verbose,
+    SplProgramInterfaceError,
+};
 
 /// Trait for implementing Shank & Native programs to
 /// build a processor
@@ -130,8 +132,7 @@ pub fn evaluate_interface_instructions(
     // Make sure all declared interfaces have no remaining unmatched instructions
     for x in declared_interfaces.values() {
         if !x.is_empty() {
-            dump_remaining_interface_instructions(declared_interfaces);
-            return Err(SplProgramInterfaceError::InstructionMissing);
+            return Err(invalid_instruction_namespace_verbose(&declared_interfaces));
         }
     }
     Ok(())
@@ -146,7 +147,10 @@ fn process_declared_instruction<I: Interface>(
     match declared_interfaces.get_mut(&declared_ix.interface_namespace) {
         Some(set) => {
             if !set.remove(&declared_ix) {
-                return Err(SplProgramInterfaceError::InstructionNotFound);
+                return Err(instruction_missing_verbose(
+                    &declared_ix.interface_namespace,
+                    &declared_ix.instruction_namespace,
+                ));
             }
         }
         None => {
@@ -154,34 +158,21 @@ fn process_declared_instruction<I: Interface>(
             if !set.remove(&declared_ix) {
                 match set
                     .iter()
-                    .find(|i| &i.instruction_namespace == &declared_ix.instruction_namespace)
+                    .find(|i| i.instruction_namespace == declared_ix.instruction_namespace)
                 {
                     Some(ins) => {
-                        println!(
-                            "\n\nIncorrect arguments for interface instruction `{}::{}`:\n",
-                            declared_ix.interface_namespace, declared_ix.instruction_namespace
-                        );
-                        println!("Provided arguments:");
-                        for arg in &declared_ix.required_args {
-                            let ty = arg.1.clone();
-                            println!("  - {}: {}", arg.0, quote! {#ty}.to_string());
-                        }
-                        println!("\n");
-                        println!("Required arguments:");
-                        for arg in &ins.required_args {
-                            let ty = arg.1.clone();
-                            println!("  - {}: {}", arg.0, quote! {#ty}.to_string());
-                        }
-                        println!("\n");
-                        return Err(SplProgramInterfaceError::MissingArgument);
+                        return Err(missing_args_verbose(
+                            &declared_ix.interface_namespace,
+                            &declared_ix.instruction_namespace,
+                            &declared_ix.required_args,
+                            &ins.required_args,
+                        ));
                     }
                     None => {
-                        println!("\n\nFound the following unknown interface instructions:\n");
-                        println!(
-                            "  - {}::{}",
-                            declared_ix.interface_namespace, declared_ix.instruction_namespace
-                        );
-                        return Err(SplProgramInterfaceError::InstructionNotFound);
+                        return Err(instruction_missing_verbose(
+                            &declared_ix.interface_namespace,
+                            &declared_ix.instruction_namespace,
+                        ))
                     }
                 }
             }
@@ -189,18 +180,4 @@ fn process_declared_instruction<I: Interface>(
         }
     }
     Ok(())
-}
-
-/// Dumps any remaining interface instructions in the evaluation
-/// set for error reporting
-fn dump_remaining_interface_instructions(
-    declared_interfaces: HashMap<String, HashSet<InterfaceInstruction>>,
-) {
-    println!("\n\nThe following interface instructions were not implemented:\n");
-    for (namespace, set) in declared_interfaces {
-        for ix in set {
-            println!("   - {}::{}", namespace, ix.instruction_namespace);
-        }
-    }
-    println!("\n");
 }

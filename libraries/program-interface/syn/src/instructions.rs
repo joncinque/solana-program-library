@@ -4,9 +4,9 @@
 use spl_token_metadata_interface::instruction::{
     Emit, Initialize, RemoveKey, TokenMetadataInstruction, UpdateAuthority, UpdateField,
 };
-use syn::{parse_quote, ItemStruct};
+use syn::parse_quote;
 
-use crate::interface::{Interface, InterfaceInstruction, RequiredArg};
+use crate::interface::{Interface, InterfaceInstruction};
 
 pub trait AsInterfaceInstruction {
     fn as_interface_instruction() -> InterfaceInstruction;
@@ -30,7 +30,11 @@ impl AsInterfaceInstruction for Initialize {
         InterfaceInstruction {
             interface_namespace: TokenMetadataInstruction::NAMESPACE.to_string(),
             instruction_namespace: "metadata_initialize".to_string(),
-            required_args: parse_required_args(&parse_quote! { Initialize }),
+            required_args: vec![
+                ("name".to_string(), parse_quote! { String }),
+                ("symbol".to_string(), parse_quote! { String }),
+                ("uri".to_string(), parse_quote! { String }),
+            ],
         }
     }
 }
@@ -39,7 +43,10 @@ impl AsInterfaceInstruction for UpdateField {
         InterfaceInstruction {
             interface_namespace: TokenMetadataInstruction::NAMESPACE.to_string(),
             instruction_namespace: "update_field".to_string(),
-            required_args: parse_required_args(&parse_quote! { UpdateField }),
+            required_args: vec![
+                ("field".to_string(), parse_quote! { Field }),
+                ("value".to_string(), parse_quote! { String }),
+            ],
         }
     }
 }
@@ -48,7 +55,7 @@ impl AsInterfaceInstruction for RemoveKey {
         InterfaceInstruction {
             interface_namespace: TokenMetadataInstruction::NAMESPACE.to_string(),
             instruction_namespace: "remove_a_key".to_string(),
-            required_args: parse_required_args(&parse_quote! { RemoveKey }),
+            required_args: vec![("key".to_string(), parse_quote! { String })],
         }
     }
 }
@@ -57,7 +64,7 @@ impl AsInterfaceInstruction for UpdateAuthority {
         InterfaceInstruction {
             interface_namespace: TokenMetadataInstruction::NAMESPACE.to_string(),
             instruction_namespace: "update_authority".to_string(),
-            required_args: parse_required_args(&parse_quote! { UpdateAuthority }),
+            required_args: vec![("new_authority".to_string(), parse_quote! { Option<Pubkey> })],
         }
     }
 }
@@ -66,15 +73,10 @@ impl AsInterfaceInstruction for Emit {
         InterfaceInstruction {
             interface_namespace: TokenMetadataInstruction::NAMESPACE.to_string(),
             instruction_namespace: "emitting".to_string(),
-            required_args: parse_required_args(&parse_quote! { Emit }),
+            required_args: vec![
+                ("start".to_string(), parse_quote! { Option<u64> }),
+                ("end".to_string(), parse_quote! { Option<u64> }),
+            ],
         }
     }
-}
-
-fn parse_required_args(item_struct: &ItemStruct) -> Vec<RequiredArg> {
-    let mut required_args = vec![];
-    for f in &item_struct.fields {
-        required_args.push((f.ident.as_ref().unwrap().to_string(), f.ty.clone()))
-    }
-    required_args
 }
