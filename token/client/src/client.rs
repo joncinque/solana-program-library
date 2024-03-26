@@ -389,7 +389,7 @@ where
         &self,
         transaction: &Transaction,
     ) -> ProgramClientResult<ST::SimulationOutput> {
-        Ok(RpcClientResponse::Transaction(transaction.clone()))
+        Err("Unable to simulate transaction in offline mode".into())
     }
 
     async fn get_account(&self, _address: Pubkey) -> ProgramClientResult<Option<Account>> {
